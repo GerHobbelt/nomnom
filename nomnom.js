@@ -121,9 +121,24 @@ ArgParser.prototype = {
   },
 
   parse : function(argv) {
+      try {
+          return this.parse_(argv);
+      } catch (err) {
+          if (typeof err === "number") { // wait for stdout to be flushed
+              process.stdout.write("", process.exit.bind(process, err));
+              return null;
+          }
+          throw err;
+      }
+  },
+  parse_ : function(argv) {
     this.print = this.print || function(str, code) {
-      console.log(str);
-      process.exit(code || 0);
+      if (code) {
+          console.error(str);
+      } else {
+          console.log(str);
+      }
+      throw (code || 0);
     };
     this._help = this._help || "";
     this._script = this._script || process.argv[0] + " "
