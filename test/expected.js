@@ -60,7 +60,7 @@ exports.testChoices = function (test) {
 };
 
 exports.testInterspersedCommand = function (test) {
-  //test.expect(3);
+  test.expect(6);
 
   var cbCalled = false;
 
