@@ -1,6 +1,8 @@
 # deprecation notice
 
-Nomnom is deprecated. Check out https://github.com/tj/commander.js, which should have most, if not all of the capability that nomnom had. Thank you!
+The original author's Nomnom is deprecated; this (and other) forks is not: we continue to update this library.
+
+When you are unsure about using this library's fork (or others), you may wish to check out https://github.com/tj/commander.js, which should have most, if not all of the capability that nomnom has. Thank you!
 
 # nomnom
 

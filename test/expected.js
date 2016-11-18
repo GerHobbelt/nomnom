@@ -61,3 +61,49 @@ exports.testChoices = function(test) {
    test.equal(options.color, 'green');
    test.done();
 };
+
+exports.testInterspersedCommand = function (test) {
+  test.expect(6);
+
+  var parser = function (printer) {
+    var parser = nomnom().options({
+      foo: {
+        flag: true,
+        help: 'bar'
+      }
+    }).nocolors();
+    parser.command('cmd')
+      .help('fixes all the things')
+      .options({
+        bar: {
+          abbr: 'b',
+          flag: true,
+          help: 'foo'
+        }
+      });
+    if (printer) {
+      parser.printer(printer);
+    }
+    return parser;
+  };
+
+  var options = undefined;
+
+  test.throws(function() {
+    parser(function (string) {
+      test.equal(0, string.indexOf('commands can not be interspersed with arguments'));
+      throw new Error();
+    }).parse(['--foo', 'cmd', '-b']);
+  }, Error)
+  test.throws(function() {
+    parser(function (string) {
+      test.equal(1, string.indexOf('command argument is required'));
+      throw new Error();
+    }).parse(['--foo', '-b', 'cmd']);
+  }, Error)
+
+  options = parser().parse(['cmd', '--foo', '-b']);
+  test.ok(options.foo);
+  test.ok(options.bar);
+  test.done();
+};

@@ -1,14 +1,18 @@
 {
-  "name": "nomnom",
+  "name": "@GerHobbelt/nomnom",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.1",
+  "version": "1.8.3",
   "author": "Heather Arthur <fayearthur@gmail.com>",
+  "contributors": [
+    "Greg Banks <greg@objectlabs.com>",
+    "Ger Hobbelt <ger@hobbelt.com>"
+  ],
   "scripts": {
     "test": "bash ./node_modules/.bin/nodeunit test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/harthur/nomnom.git"
+    "url": "http://github.com/GerHobbelt/nomnom.git"
   },
   "main": "./nomnom",
   "keywords": [

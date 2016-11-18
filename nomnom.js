@@ -296,7 +296,14 @@ ArgParser.prototype = {
 
       /* positional */
       if (arg.isValue) {
-        positionals.push(arg.value);
+        if (arg.str in that.commands &&
+            commandExpected &&
+            !command &&
+            !that.fallback) {
+          that.print("commands can not be interspersed with arguments\n\n" + that.getUsage(), 1);
+        } else {
+          positionals.push(arg.value);
+        }
       }
       else if (arg.chars) {
         var last = arg.chars.pop();
