@@ -94,13 +94,13 @@ exports.testInterspersedCommand = function (test) {
       test.equal(0, string.indexOf('commands can not be interspersed with arguments'));
       throw new Error();
     }).parse(['--foo', 'cmd', '-b']);
-  }, Error)
+  }, Error);
   test.throws(function() {
     parser(function (string) {
       test.equal(1, string.indexOf('command argument is required'));
       throw new Error();
     }).parse(['--foo', '-b', 'cmd']);
-  }, Error)
+  }, Error);
 
   options = parser().parse(['cmd', '--foo', '-b']);
   test.ok(options.foo);
