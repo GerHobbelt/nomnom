@@ -1,4 +1,4 @@
-var _ = require("underscore"), chalk = require('chalk');
+var _ = require("underscore"), chalk = require('chalk'), exit = require('exit');
 
 
 var retArgs = function (s) {
@@ -164,10 +164,10 @@ ArgParser.prototype = {
     this.print = this.print || function(str, code) {
       if (code > 0) {
         console.error(str);
-        process.exit(code);
+        exit(code);
       } else {
         console.log(str);
-        process.exit(0);
+        exit(0);
       }
     };
     this._help = this._help || "";
