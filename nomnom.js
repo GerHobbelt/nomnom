@@ -339,7 +339,7 @@ ArgParser.prototype = {
         var value = arg.value;
 
         /* --key */
-        if (value === undefined) {
+        if (value === true) {
           /* --key value */
           opt = that.opt(arg.full);
           if (!opt.flag) {
@@ -563,15 +563,19 @@ ArgParser.prototype.setOption = function(options, arg, value) {
 /* an arg is an item that's actually parsed from the command line
    e.g. "-l", "-l+", "log.txt", or "--logfile=log.txt" */
 var Arg = function (str) {
-  var abbrRegex = /^\-(\w+?)([+-]?)$/,
-      fullRegex = /^\-\-(no\-)?(.+?)(?:=(.+))?$/,
+  var abbrRegex = /^-(\w+?)([+-]?)$/,
+      fullRegex1 = /^--(no-)?(\w+(?:[^=+]*?[^=+\-])?)$/,     // --no-long-flag-name-123, --long-flag-name-123
+      fullRegex2 = /^--(\w+(?:[^=+]*?[^=+\-])?)([+\-])$/,    // --long-flag-name-123-, --long-flag-name-123+
+      fullRegex3 = /^--(\w+(?:[^=+]*?[^=+\-])?)=(.+)$/,      // --long-flag-name-123=value
       valRegex = /^[^\-].*/;
 
   var charMatch = abbrRegex.exec(str),
       chars = charMatch && charMatch[1].split("");
 
-  var fullMatch = fullRegex.exec(str),
-      full = fullMatch && fullMatch[2];
+  var fullMatch1 = fullRegex1.exec(str),
+      fullMatch2 = fullRegex2.exec(str),
+      fullMatch3 = fullRegex3.exec(str),
+      full = fullMatch1 ? fullMatch1[2] : fullMatch2 ? fullMatch2[1] : fullMatch3 ? fullMatch3[1] : null;
 
   var isValue = str !== undefined && (str === "" || valRegex.test(str));
   var value;
@@ -579,7 +583,7 @@ var Arg = function (str) {
     value = str;
   }
   else if (full) {
-    value = fullMatch[1] ? false : fullMatch[3];
+    value = fullMatch1 ? !fullMatch1[1] : fullMatch2 ? (fullMatch2[2] === "+") : fullMatch3 ? fullMatch3[2] : false;
   }
   else if (chars && chars.length === 1) {
     // Only allow `-v-` or `-v+` when option `-v` is alone. Do *not* allow `-cfv-` or `-cfv+`!
