@@ -9,7 +9,7 @@
 # nomnom
 
 
-[![build status](https://secure.travis-ci.org/GerHobbelt/fpcvt.png)](https://travis-ci.org/search/fpcvt)
+[![build status](https://secure.travis-ci.org/GerHobbelt/nomnom.png)](https://travis-ci.org/search/nomnom)
 
 
 nomnom is an option parser for node. It noms your args and gives them back to you in a hash.
