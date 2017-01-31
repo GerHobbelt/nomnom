@@ -1,10 +1,16 @@
-# deprecation notice
-
-The original author's Nomnom is deprecated; this (and other) forks is not: we continue to update this library.
-
-When you are unsure about using this library's fork (or others), you may wish to check out https://github.com/tj/commander.js, which should have most, if not all of the capability that nomnom has. Thank you!
+> 
+> # deprecation notice
+> 
+> The original author's `nomnom` is deprecated; this (and other) forks is not: we continue to update this library.
+> 
+> When you are unsure about using this library's fork (or others), you may wish to check out https://github.com/tj/commander.js, which should have most, if not all of the capability that nomnom has. Thank you!
+> 
 
 # nomnom
+
+
+[![build status](https://secure.travis-ci.org/GerHobbelt/fpcvt.png)](https://travis-ci.org/search/fpcvt)
+
 
 nomnom is an option parser for node. It noms your args and gives them back to you in a hash.
 
