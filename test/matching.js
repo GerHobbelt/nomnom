@@ -157,3 +157,25 @@ exports.testFlagsAbuse = function(test) {
    test.done();
 }
 
+exports.testNegativeFlags = function(test) {
+   var o = {
+      noLineNumbers: {
+         abbr: 'n',
+         full: 'no-line-numbers'
+      }
+   };
+
+   var p = nomnom();
+   p.print = function (msg, code) {
+      test.equal(code, 1);
+      test.ok(msg.indexOf("options MUST NOT start their 'full option name' with 'no-'") >= 0);
+   };
+   p.options(o);
+
+   // var options = p.parse(["--no-line-numbers"]);
+
+   test.done();
+}
+
+
+

@@ -161,6 +161,7 @@ ArgParser.prototype = {
   },
 
   parse : function(argv) {
+    var that = this;
     this.print = this.print || function(str, code) {
       if (code > 0) {
         console.error(str);
@@ -260,7 +261,11 @@ ArgParser.prototype = {
       });
     }
     this.specs = this.specs.map(function(opt) {
-      return Opt(opt);
+      var o = Opt(opt);
+      if (o.full && /^no-/.test(o.full)) {
+        that.print("ERROR: nomnom options MUST NOT start their 'full option name' with 'no-', such as '" + o.full + "'", 1);
+      }
+      return o;
     });
 
     if (argv.indexOf("--help") >= 0 || argv.indexOf("-h") >= 0) {
@@ -290,7 +295,6 @@ ArgParser.prototype = {
     var positionals = [];
 
     /* parse the args */
-    var that = this;
     args.reduce(function(arg, val) {
       var opt;
 
