@@ -1,7 +1,7 @@
 {
   "name": "nomnom",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.4-4",
+  "version": "1.8.4-5",
   "author": "Heather Arthur <fayearthur@gmail.com>",
   "contributors": [
     "Gregory Banks <quaid@kuatowares.com>",
