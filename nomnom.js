@@ -102,6 +102,26 @@ ArgParser.prototype = {
     return this;
   },
 
+  _unknownOptionTreatment: true,
+
+  unknownOptionTreatment : function (enable) {
+    if (typeof enable === "function") {
+      this._unknownOptionTreatment = enable;
+    } else if (enable) {
+      this._unknownOptionTreatment = function __treatUnknownOption__(options, name, value) {
+        return {
+          name: name,
+          value: value
+        };
+      };
+    } else {
+      this._unknownOptionTreatment = function __treatUnknownOption__(options, name, value) {
+        this.print("ERROR: unknown option '" + name + "' specified.", 1);
+      };
+    }
+    return this;
+  },
+
   _autoShowUsage: true,
 
   autoShowUsage : function (enable) {
@@ -175,6 +195,7 @@ ArgParser.prototype = {
     this._script = this._script || process.argv[0] + " "
           + require('path').basename(process.argv[1]);
     this.specs = this.specs || {};
+    this.unknownOptionTreatment(this._unknownOptionTreatment);
 
     argv = argv || process.argv.slice(2);
 
@@ -526,6 +547,17 @@ ArgParser.prototype.opt = function (arg) {
 
 ArgParser.prototype.setOption = function (options, arg, value) {
   var option = this.opt(arg);
+
+  if (option.__nomnom_dummy__) {
+    // unspecified options receive special treatment:
+    var opt = this._unknownOptionTreatment(options, arg, value);
+    if (!opt) {
+      return;
+    }
+    arg = opt.name;
+    value = opt.value;
+  } 
+
   if (option.callback) {
     var message = option.callback(value);
 
