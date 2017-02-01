@@ -555,7 +555,7 @@ ArgParser.prototype.opt = function (arg) {
 ArgParser.prototype.setOption = function (options, arg, value) {
   var option = this.opt(arg);
 
-  if (option.__nomnom_dummy__) {
+  if (option.__nomnom_dummy__ && typeof arg === "string" && arg !== "--") {
     // unspecified options receive special treatment:
     var opt = this._unknownOptionTreatment(options, arg, value);
     if (!opt) {
