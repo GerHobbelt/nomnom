@@ -331,33 +331,40 @@ ArgParser.prototype = {
         }
       }
       else if (arg.chars) {
-        var last = arg.chars.pop();
+        var last;
         var flagValue = (arg.value === undefined ? true : arg.value);
 
-        /* -cfv */
-        arg.chars.forEach(function (ch) {
-          that.setOption(options, ch, true);
-        });
+        /* -cfv / ...; always check each of the abbreviated options, if there's one or many: */
+        for (var i = 0, last = arg.chars.length - 1; i <= last; i++) {
+          var c = arg.chars[i];
 
-        /* -v key */
-        opt = that.opt(last);
-        if (!opt.flag) {
-          if (val.isValue)  {
-            that.setOption(options, last, val.value);
-            return Arg(); // skip next turn - swallow arg
-          }
-          else if (opt.__nomnom_dummy__) {
-            // unspecified options which have no value are considered to be *flag* options:
-            that.setOption(options, last, flagValue);
+          if (i === last) {
+            flagValue = (arg.value === undefined ? true : arg.value);
           }
           else {
-            that.print("'-" + (opt.name || last) + "'"
-              + " expects a value\n\n" + that.getUsage(), 1);
+            flagValue = true;
           }
-        }
-        else {
-          /* -v with optional '+' or '-' */
-          that.setOption(options, last, flagValue);
+
+          /* -v key */
+          opt = that.opt(c);
+          if (!opt.flag) {
+            if (val.isValue && last === 0 /* -v key */) {
+              that.setOption(options, c, val.value);
+              return Arg(); // skip next turn - swallow arg
+            }
+            else if (opt.__nomnom_dummy__) {
+              // unspecified options which have no value are considered to be *flag* options:
+              that.setOption(options, c, flagValue);
+            }
+            else {
+              that.print("'-" + (opt.name || c) + "'"
+                + " expects a value\n\n" + that.getUsage(), 1);
+            }
+          }
+          else {
+            /* -v with optional '+' or '-' */
+            that.setOption(options, c, flagValue);
+          }
         }
       }
       else if (arg.full) {
