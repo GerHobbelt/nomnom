@@ -353,7 +353,7 @@ ArgParser.prototype = {
             }
             else if (opt.__nomnom_dummy__) {
               // unspecified options which have no value are considered to be *flag* options:
-              value = true;
+              that.setOption(options, arg.full, true);
             }
             else {
               that.print("'--" + (opt.name || arg.full) + "'"
@@ -361,11 +361,13 @@ ArgParser.prototype = {
             }
           }
           else {
-            /* --flag */
-            value = true;
+            /* --flag / --no-flag */
+            that.setOption(options, arg.full, value);
           }
+        } 
+        else {
+          that.setOption(options, arg.full, value);
         }
-        that.setOption(options, arg.full, value);
       }
       return val;
     });
