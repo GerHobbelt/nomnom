@@ -125,7 +125,7 @@ ArgParser.prototype = {
   _autoShowUsage: true,
 
   autoShowUsage : function (enable) {
-    this._autoShowUsage = !!enable;
+    this._autoShowUsage = (arguments.length === 0 || !!enable);
     return this;
   },
 
