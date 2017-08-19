@@ -1,5 +1,5 @@
 {
-  "name": "nomnom",
+  "name": "@gerhobbelt/nomnom",
   "description": "Option parser with generated usage and commands",
   "version": "1.8.4-14",
   "author": "Heather Arthur <fayearthur@gmail.com>",
@@ -8,7 +8,8 @@
     "Ger Hobbelt <ger@hobbelt.com>"
   ],
   "scripts": {
-    "test": "bash ./node_modules/.bin/nodeunit test/*.js"
+    "test": "bash ./node_modules/.bin/nodeunit test/*.js",
+    "pub": "npm publish --access=public"
   },
   "repository": {
     "type": "git",
