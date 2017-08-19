@@ -154,6 +154,11 @@ ArgParser.prototype = {
     return this;
   },
 
+  extendHelp : function(help) {
+    this._extendHelp = help;
+    return this;
+  },
+
   colors: function () {
     // deprecated - colors are on by default now
     return this;
@@ -536,6 +541,10 @@ ArgParser.prototype = {
 
     if (this._help) {
       str += this._colorConfig.usageStringColor("\n" + this._help);
+    }
+    
+    if (this._extendHelp) {
+      str += "\n" + this._extendHelp;
     }
     return str;
   }
