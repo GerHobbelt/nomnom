@@ -24,6 +24,9 @@
     "parser"
   ],
   "license": "MIT",
+  "engines": { 
+    "node": ">=4.0" 
+  },
   "dependencies": {
     "underscore": "1.8.3",
     "chalk": "2.1.0",
