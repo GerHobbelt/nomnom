@@ -1,7 +1,7 @@
 {
   "name": "@gerhobbelt/nomnom",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.4-15",
+  "version": "1.8.4-16",
   "author": "Heather Arthur <fayearthur@gmail.com>",
   "contributors": [
     "Gregory Banks <quaid@kuatowares.com>",
@@ -24,8 +24,8 @@
     "parser"
   ],
   "license": "MIT",
-  "engines": { 
-    "node": ">=4.0" 
+  "engines": {
+    "node": ">=4.0"
   },
   "dependencies": {
     "underscore": "1.8.3",
