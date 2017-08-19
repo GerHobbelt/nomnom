@@ -1,4 +1,6 @@
-var _ = require("underscore"), chalk = require('chalk'), exit = require('exit');
+var _ = require("underscore"), 
+    chalk = require('chalk'), 
+    exit = require('exit');
 
 
 var retArgs = function (s) {
@@ -19,10 +21,10 @@ var isWin = /^win/.test(process.platform);
 
 var defaultColorConfig = _.extend({}, noColorConfig, {
   usageHeadingColor: chalk.bold,
-  usageStringColor: chalk.stripColor,
+  usageStringColor: chalk /* .stripColor */,
   positionalHelpColor: chalk.grey,
   optionsHeaderColor: isWin ? chalk.cyan : chalk.blue,
-  helpColor: chalk.stripColor,
+  helpColor: chalk /* .stripColor */,
   requiredArgColor: chalk.red
 });
 
