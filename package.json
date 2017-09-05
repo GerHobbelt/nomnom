@@ -1,7 +1,7 @@
 {
   "name": "@gerhobbelt/nomnom",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.4-16",
+  "version": "1.8.4-17",
   "author": "Heather Arthur <fayearthur@gmail.com>",
   "contributors": [
     "Gregory Banks <quaid@kuatowares.com>",
@@ -28,6 +28,7 @@
     "node": ">=4.0"
   },
   "dependencies": {
+    "@gerhobbelt/linewrap": "0.2.2-2",
     "underscore": "1.8.3",
     "chalk": "2.1.0",
     "exit": "0.1.2"

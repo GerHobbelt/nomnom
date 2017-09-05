@@ -1,5 +1,6 @@
 var _ = require("underscore"), 
     chalk = require('chalk'), 
+    linewrap = require('@gerhobbelt/linewrap'), 
     exit = require('exit');
 
 
@@ -246,12 +247,22 @@ ArgParser.prototype = {
                 return cmd.name.length;
               }).name.length;
 
-              // create the two column text strings
-              var cmdHelp = _.map(this.commands, function (cmd, name) {
-                var diff = maxLength - name.length;
-                var pad = new Array(diff + 4).join(" ");
-                return "  " + [ name, pad, cmd.help ].join(" ");
-              });
+              var cmdHelp;
+              if (maxLength <= 12) {
+                // create the two column text strings
+                cmdHelp = _.map(this.commands, function (cmd, name) {
+                  var diff = maxLength - name.length;
+                  var pad = new Array(diff + 4).join(" ");
+                  return "  " + [ name, pad, cmd.help ].join(" ");
+                });
+              } else {
+                // create a two column output where the second column interleaves
+                // the first. The second column is indented 8 spaces.
+                var pad = new Array(8 + 1).join(" ");
+                cmdHelp = _.map(this.commands, function (cmd, name) {
+                  return "  " + [ name, "\n", pad, " ", cmd.help ].join("");
+                });
+              }
               return "\n" + cmdHelp.join("\n");
             }
           };
@@ -505,15 +516,19 @@ ArgParser.prototype = {
       }
       return s;
     }
+
+    var console_width = (process.stdout && process.stdout.columns) || 80;
+
     var longest = positionals.reduce(function (max, pos) {
       return pos.name.length > max ? pos.name.length : max;
     }, 0);
 
     positionals.forEach(function (pos) {
       var posStr = pos.string || pos.name;
-      str += this._colorConfig.usageStringColor(posStr + spaces(longest - posStr.length) + "     ");
+      str += this._colorConfig.usageStringColor(posStr + (longest < 12 ? spaces(longest - posStr.length) + "     " : "\n        "));
 
-      str += this._colorConfig.positionalHelpColor(pos.help || "");
+      var wrap = linewrap((longest < 12 ? longest + 5 : 8), console_width);
+      str += this._colorConfig.positionalHelpColor(wrap(pos.help || ""));
       str += this._colorConfig.usageStringColor("\n");
 
     }, this);
@@ -531,11 +546,36 @@ ArgParser.prototype = {
 
       options.forEach(function (opt) {
         if (!opt.hidden) {
-          str += this._colorConfig.usageStringColor("   " + opt.string + spaces(longest - opt.string.length) + "   ");
+          str += this._colorConfig.usageStringColor("   " + opt.string + (longest < 12 ? spaces(longest - opt.string.length) + "   " : "\n"));
 
           var defaults = (opt.default !== undefined ? "  [" + opt.default + "]" : "");
           var help = opt.help ? opt.help + defaults : "";
-          str += this._colorConfig.helpColor(help);
+if (0) {
+          // linewrap library is still buggy    :-()
+          var wrap = linewrap(console_width, {
+            whitespace: 'line',
+            respectLineBreaks: 'all',
+            //wrapLineIndentBase: / : /, 
+            //wrapLineIndent: 2,
+            wrapLineIndent: longest < 12 ? longest + 3 : 8
+          }); 
+} else {
+          var indent = longest < 12 ? longest + 3 : 8;
+          var indent_str = new Array(indent + 1).join(" ");
+          var wrap_master = linewrap(console_width - indent, {
+            whitespace: 'line',
+            respectLineBreaks: 'all',
+            wrapLineIndentBase: / : /, 
+            wrapLineIndent: 3,
+            //wrapLineIndent: longest < 12 ? longest + 3 : 8,
+            lineBreakScheme: "unix"
+          });
+          var wrap = function (text) {
+            var s = wrap_master(text);
+            return s.split("\n").map(function (l) { return indent_str + l; }).join("\n");
+          };
+} 
+          str += this._colorConfig.helpColor(wrap(help));
           str += this._colorConfig.usageStringColor("\n");
         }
       }, this);
