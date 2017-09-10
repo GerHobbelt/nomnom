@@ -172,6 +172,13 @@ ArgParser.prototype = {
     return this;
   },
 
+  _produceExplicitOptionsOnly: false,
+
+  produceExplicitOptionsOnly: function (enable) {
+    this._produceExplicitOptionsOnly  = !!enable;
+    return this;
+  },
+
   colors: function () {
     // deprecated - colors are on by default now
     return this;
@@ -434,20 +441,26 @@ ArgParser.prototype = {
 
     options._ = positionals;
 
-    this.specs.forEach(function (opt) {
-      if (opt.default !== undefined && options[opt.name] === undefined) {
-        options[opt.name] = opt.default;
-      }
-    }, this);
+    if (!this._produceExplicitOptionsOnly) {
+      this.specs.forEach(function (opt) {
+        if (opt.default !== undefined && options[opt.name] === undefined) {
+          options[opt.name] = opt.default;
+        }
+      }, this);
+    }
 
     // exit if required arg isn't present
     this.specs.forEach(function (opt) {
       if (opt.required && options[opt.name] === undefined) {
-        var msg = opt.name + " argument is required";
-        msg = this._colorConfig.requiredArgColor(msg);
-        //msg = this._nocolors ? msg : chalk.red(msg);
+        if (opt.default !== undefined) {
+          options[opt.name] = opt.default;
+        } else {
+          var msg = opt.name + " argument is required";
+          msg = this._colorConfig.requiredArgColor(msg);
+          //msg = this._nocolors ? msg : chalk.red(msg);
 
-        this.print("\n" + msg + "\n" + this.getUsage(), 1);
+          this.print("\n" + msg + "\n" + this.getUsage(), 1);
+        }
       }
     }, this);
 
