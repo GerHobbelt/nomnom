@@ -132,15 +132,21 @@ ArgParser.prototype = {
     return this;
   },
 
+  _usage: null,
+
   usage : function (usage) {
     this._usage = usage;
     return this;
   },
 
+  print: null,
+
   printer : function (print) {
     this.print = print;
     return this;
   },
+
+  _script: null,
 
   script : function (script) {
     this._script = script;
@@ -152,10 +158,14 @@ ArgParser.prototype = {
     return this.script(script);
   },
 
+  _help: null,
+
   help : function (help) {
     this._help = help;
     return this;
   },
+
+  _extendHelp: null,
 
   extendHelp : function(help) {
     this._extendHelp = help;
@@ -755,7 +765,7 @@ var createParser = function () {
 var nomnom = createParser();
 
 for (var i in nomnom) {
-  if (typeof nomnom[i] == "function") {
+  if (typeof nomnom[i] === "function") {
      createParser[i] = _(nomnom[i]).bind(nomnom);
   }
 }
