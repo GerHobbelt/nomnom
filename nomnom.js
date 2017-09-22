@@ -382,12 +382,6 @@ ArgParser.prototype = {
 
           /* -v key */
           opt = that.opt(c);
-          // console.log('option:', {
-          //     opt,
-          //     val,
-          //     flagValue,
-          //     arg
-          // });
           if (!opt.flag) {
             if (val.isValue && last === 0 /* -v key */) {
               that.setOption(options, c, val.value);
@@ -410,13 +404,6 @@ ArgParser.prototype = {
       }
       else if (arg.full) {
         var value = arg.value;
-        // opt = that.opt(arg.full);
-        // console.log('option:', {
-        //     opt,
-        //     val,
-        //     value,
-        //     arg
-        // });
 
         /* --key */
         if (value === true) {
