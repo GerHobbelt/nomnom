@@ -134,6 +134,22 @@ ArgParser.prototype = {
     return this;
   },
 
+  _errorUsageMode: 'minimal',
+
+  errorUsageMode: function (mode) {
+    switch (mode) {
+    default:
+        this._errorUsageMode = 'full';
+        return this;
+
+    case 'full':
+    case 'none':
+    case 'minimal':
+        this._errorUsageMode = mode;
+        return this;
+    }
+  },
+
   _usage: null,
 
   usage: function (usage) {
@@ -373,7 +389,7 @@ ArgParser.prototype = {
           !command &&
           !that.fallback
         ) {
-          that.print("commands can not be interspersed with arguments\n\n" + that.getUsage(), 1);
+          that.print("commands can not be interspersed with arguments" + that.getUsageOnError(), 1);
         }
         else {
           positionals.push(arg.value);
@@ -381,37 +397,56 @@ ArgParser.prototype = {
       }
       else if (arg.chars) {
         var last;
-        var flagValue = (arg.value === undefined ? true : arg.value);
+        var flagValue;
 
         /* -cfv / ...; always check each of the abbreviated options, if there's one or many: */
         for (var i = 0, last = arg.chars.length - 1; i <= last; i++) {
           var c = arg.chars[i];
 
           if (i === last) {
-            flagValue = (arg.value === undefined ? true : arg.value);
+            flagValue = arg.value;
           }
           else {
             flagValue = true;
           }
 
-          /* -v key */
-          opt = that.opt(c);
-          if (!opt.flag) {
-            if (val.isValue && last === 0 /* -v key */) {
-              that.setOption(options, c, val.value);
-              return Arg(); // skip next turn - swallow arg
-            }
-            else if (opt.__nomnom_dummy__) {
-              // unspecified options which have no value are considered to be *flag* options:
-              that.setOption(options, c, flagValue);
+          /* -k */
+          if (i === last) {
+            if (flagValue === true) {
+              /* -k value */
+              opt = that.opt(c);
+              if (!opt.flag) {
+                if (val.isValue && !arg.isFlag) {
+                  that.setOption(options, c, val.value);
+                  return Arg(); // skip next turn - swallow arg
+                }
+                else if (arg.isFlag) {
+                  // explicit flag treatment of a non-flag option: produce a boolean value anyway.
+                  // (this way you can have options which behave as both flag and value option simultaneously)
+                  that.setOption(options, c, flagValue);
+                }
+                else if (opt.__nomnom_dummy__) {
+                  // unspecified options which have no value are considered to be *flag* options:
+                  that.setOption(options, c, true);
+                }
+                else if (opt.optional) {
+                  that.setOption(options, c, opt.default);
+                }
+                else {
+                  that.print("'-" + (opt.abbr || opt.name || c) + "'" 
+                      + " expects a value." + that.getUsageOnError(), 1);
+                }
+              }
+              else {
+                /* --flag / --no-flag */
+                that.setOption(options, c, flagValue);
+              }
             }
             else {
-              that.print("'-" + (opt.name || c) + "'" 
-                  + " expects a value\n\n" + that.getUsage(), 1);
+              that.setOption(options, c, arg.value === undefined ? true : arg.value);
             }
           }
           else {
-            /* -v with optional '+' or '-' */
             that.setOption(options, c, flagValue);
           }
         }
@@ -441,8 +476,8 @@ ArgParser.prototype = {
               that.setOption(options, arg.full, opt.default);
             }
             else {
-              that.print("'--" + (opt.name || arg.full) + "'" 
-                  + " expects a value\n\n" + that.getUsage(), 1);
+              that.print("'--" + (opt.full || opt.name || arg.full) + "'" 
+                  + " expects a value." + that.getUsageOnError(), 1);
             }
           }
           else {
@@ -478,11 +513,11 @@ ArgParser.prototype = {
           options[opt.name] = opt.default;
         }
         else {
-          var msg = opt.name + " argument is required";
+          var msg = opt.name + " argument is required.";
           msg = this._colorConfig.requiredArgColor(msg);
           //msg = this._nocolors ? msg : chalk.red(msg);
 
-          this.print("\n" + msg + "\n" + this.getUsage(), 1);
+          this.print("\n" + msg + this.getUsageOnError(), 1);
         }
       }
     }, this);
@@ -495,6 +530,19 @@ ArgParser.prototype = {
     }
 
     return options;
+  },
+
+  getUsageOnError: function () {
+    switch (this._errorUsageMode) {
+    default:                // full
+      return '\n\n' + this.getUsage();
+
+    case 'none':
+      return '';
+
+    case 'minimal':
+      return '\n\nRun with option "--help" to get extended command line usage info.';
+    }
   },
 
   getUsage: function () {
@@ -711,7 +759,7 @@ ArgParser.prototype.setOption = function (options, arg, value) {
 /* an arg is an item that's actually parsed from the command line
    e.g. "-l", "-l+", "log.txt", or "--logfile=log.txt" */
 var Arg = function (str) {
-  var abbrRegex1 = /^-(\w+?)([+\-]?)$/,                     // -v, -v-, -cfv+
+  var abbrRegex1 = /^-(\w+)([+\-]?)$/,                      // -v, -v-, -cfv+
       abbrRegex2 = /^-(\w+)=(.+)$/,                         // -o=value
       fullRegex1 = /^--(no-)?(\w+(?:[^=+]*?[^=+\-])?)$/,    // --no-long-flag-name-123, --long-flag-name-123
       fullRegex2 = /^--(\w+(?:[^=+]*?[^=+\-])?)([+\-])$/,   // --long-flag-name-123-, --long-flag-name-123+
@@ -728,7 +776,7 @@ var Arg = function (str) {
       full = fullMatch1 ? fullMatch1[2] : fullMatch2 ? fullMatch2[1] : fullMatch3 ? fullMatch3[1] : null;
 
   var isValue = str !== undefined && (str === "" || valRegex.test(str));
-  var isFlag = false;
+  var isFlag = undefined;
   var value;
   if (isValue) {
     value = str;
@@ -756,8 +804,7 @@ var Arg = function (str) {
       value = fullMatch3[2];
     }
   }
-  else if (chars && chars.length === 1) {
-    // Only allow `-v-`, `-v+` and `-v=123` when option `-v` is alone. Do *not* allow `-cfv-` or `-cfv+` or `-cfv=123`!
+  else if (chars) {
     if (charMatch1 && charMatch1[2]) {
       // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
       isFlag = true;
