@@ -412,11 +412,14 @@ ArgParser.prototype = {
           if (!opt.flag) {
             if (val.isValue) {
               that.setOption(options, arg.full, val.value);
-              return Arg();
+              return Arg(); // skip next turn - swallow arg
             }
             else if (opt.__nomnom_dummy__) {
               // unspecified options which have no value are considered to be *flag* options:
               that.setOption(options, arg.full, true);
+            }
+            else if (opt.optional) {
+              that.setOption(options, arg.full, opt.default);
             }
             else {
               that.print("'--" + (opt.name || arg.full) + "'"

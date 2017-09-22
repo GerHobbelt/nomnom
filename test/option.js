@@ -52,3 +52,49 @@ exports.testCommandOption = function(test) {
    test.strictEqual(opts.fruit, true);
    test.done();
 };
+
+
+exports.testOptionValue = function(test) {
+  var parser = nomnom()
+    .autoShowUsage(false)
+    .options({
+      'debug': {
+        abbr: 'x',
+        flag: true,
+        help: 'Print debugging info'
+      },
+      'config': {
+        abbr: 'c',
+        default: 'config.json',
+        help: 'JSON file with tests to run'
+      },
+      'req': {
+        abbr: 'r',
+        default: 'required.json',
+        required: true,
+        help: 'this option requires a value'
+      },
+      'opt': {
+        abbr: 'o',
+        optional: true,
+        default: 'optional.json',
+        help: 'this option accepts an OPTIONAL value'
+      },
+      'fruit': {
+        abbr: 'f',
+        flag: true,
+        help: 'fruit flag'
+      }
+    });
+
+   var opts = parser.parse("-x --config cfg --req xxx --opt --fruit".split(" "));
+
+   test.strictEqual(opts.debug, true);
+   test.strictEqual(opts.config, 'cfg');
+   test.strictEqual(opts.req, 'xxx');
+   test.strictEqual(opts.opt, 'optional.json');
+   test.strictEqual(opts.fruit, true);
+   test.done();
+};
+
+
