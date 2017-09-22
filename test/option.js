@@ -94,6 +94,108 @@ exports.testOptionValue = function(test) {
    test.strictEqual(opts.req, 'xxx');
    test.strictEqual(opts.opt, 'optional.json');
    test.strictEqual(opts.fruit, true);
+
+
+   var opts = parser.parse("--opt kwaak --fruit".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, 'kwaak');
+   test.strictEqual(opts.fruit, true);
+
+
+   var opts = parser.parse("--opt -f-".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, 'optional.json');
+   test.strictEqual(opts.fruit, false);
+
+
+   var opts = parser.parse("--opt=boo -f-".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, 'boo');
+   test.strictEqual(opts.fruit, false);
+
+
+   var opts = parser.parse("--opt+ -f-".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, true);
+   test.strictEqual(opts.fruit, false);
+
+
+   var opts = parser.parse("--opt- -f+".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, false);
+   test.strictEqual(opts.fruit, true);
+   test.done();
+};
+
+
+exports.testUnspecifiedOption = function(test) {
+  var parser = nomnom()
+    .autoShowUsage(false);
+
+   var opts = parser.parse("-x --config cfg --req xxx --opt --fruit".split(" "));
+
+   test.strictEqual(opts.x, true);
+   test.strictEqual(opts.config, 'cfg');
+   test.strictEqual(opts.req, 'xxx');
+   test.strictEqual(opts.opt, true);
+   test.strictEqual(opts.fruit, true);
+
+
+   var opts = parser.parse("--opt kwaak --fruit".split(" "));
+
+   test.strictEqual(opts.opt, 'kwaak');
+   test.strictEqual(opts.fruit, true);
+
+
+   var opts = parser.parse("--opt -f-".split(" "));
+
+   test.strictEqual(opts.opt, true);
+   test.strictEqual(opts.f, false);
+
+
+   var opts = parser.parse("--opt=boo -f-".split(" "));
+
+   test.strictEqual(opts.opt, 'boo');
+   test.strictEqual(opts.f, false);
+
+
+   var opts = parser.parse("--opt+ -f-".split(" "));
+
+   test.strictEqual(opts.opt, true);
+   test.strictEqual(opts.f, false);
+
+
+   var opts = parser.parse("--opt- -f+".split(" "));
+
+   test.strictEqual(opts.opt, false);
+   test.strictEqual(opts.f, true);
+
+
+   var opts = parser.parse("-o abcd -f+".split(" "));
+
+   test.strictEqual(opts.o, 'abcd');
+   test.strictEqual(opts.f, true);
+
+
+   var opts = parser.parse("-o=def -f 5".split(" "));
+
+   test.strictEqual(opts.o, 'def');
+   test.strictEqual(opts.f, 5);
    test.done();
 };
 

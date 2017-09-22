@@ -382,6 +382,12 @@ ArgParser.prototype = {
 
           /* -v key */
           opt = that.opt(c);
+          // console.log('option:', {
+          //     opt,
+          //     val,
+          //     flagValue,
+          //     arg
+          // });
           if (!opt.flag) {
             if (val.isValue && last === 0 /* -v key */) {
               that.setOption(options, c, val.value);
@@ -404,15 +410,27 @@ ArgParser.prototype = {
       }
       else if (arg.full) {
         var value = arg.value;
+        // opt = that.opt(arg.full);
+        // console.log('option:', {
+        //     opt,
+        //     val,
+        //     value,
+        //     arg
+        // });
 
         /* --key */
         if (value === true) {
           /* --key value */
           opt = that.opt(arg.full);
           if (!opt.flag) {
-            if (val.isValue) {
+            if (val.isValue && !arg.isFlag) {
               that.setOption(options, arg.full, val.value);
               return Arg(); // skip next turn - swallow arg
+            }
+            else if (arg.isFlag) {
+              // explicit flag treatment of a non-flag option: produce a boolean value anyway.
+              // (this way you can have options which behave as both flag and value option simultaneously)
+              that.setOption(options, arg.full, arg.value);
             }
             else if (opt.__nomnom_dummy__) {
               // unspecified options which have no value are considered to be *flag* options:
@@ -684,14 +702,16 @@ ArgParser.prototype.setOption = function (options, arg, value) {
 /* an arg is an item that's actually parsed from the command line
    e.g. "-l", "-l+", "log.txt", or "--logfile=log.txt" */
 var Arg = function (str) {
-  var abbrRegex = /^-(\w+?)([+-]?)$/,
+  var abbrRegex1 = /^-(\w+?)([+\-]?)$/,
+      abbrRegex2 = /^-(\w+)=(.+)$/,
       fullRegex1 = /^--(no-)?(\w+(?:[^=+]*?[^=+\-])?)$/,     // --no-long-flag-name-123, --long-flag-name-123
       fullRegex2 = /^--(\w+(?:[^=+]*?[^=+\-])?)([+\-])$/,    // --long-flag-name-123-, --long-flag-name-123+
       fullRegex3 = /^--(\w+(?:[^=+]*?[^=+\-])?)=(.+)$/,      // --long-flag-name-123=value
       valRegex = /^[^\-].*/;
 
-  var charMatch = abbrRegex.exec(str),
-      chars = charMatch && charMatch[1].split("");
+  var charMatch1 = abbrRegex1.exec(str),
+      charMatch2 = abbrRegex2.exec(str),
+      chars = charMatch1 ? charMatch1[1].split("") : charMatch2 ? charMatch2[1].split("") : null;
 
   var fullMatch1 = fullRegex1.exec(str),
       fullMatch2 = fullRegex2.exec(str),
@@ -699,16 +719,47 @@ var Arg = function (str) {
       full = fullMatch1 ? fullMatch1[2] : fullMatch2 ? fullMatch2[1] : fullMatch3 ? fullMatch3[1] : null;
 
   var isValue = str !== undefined && (str === "" || valRegex.test(str));
+  var isFlag = false;
   var value;
   if (isValue) {
     value = str;
   }
   else if (full) {
-    value = fullMatch1 ? !fullMatch1[1] : fullMatch2 ? (fullMatch2[2] === "+") : fullMatch3 ? fullMatch3[2] : false;
+    if (fullMatch1) {
+      if (fullMatch1[1]) {
+        // we have an explicit boolean/flag treatment of this option via `--no-[option]`, hence we set `isFlag`.
+        isFlag = true;
+        value = false;
+      } else {
+        // `--flag`: we may be processing a value or boolean option, hence we DO NOT set `isFlag`.
+        value = true;
+      }
+    } else if (fullMatch2) {
+      // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
+      isFlag = true;
+      value = (fullMatch2[2] === "+");
+    } else if (fullMatch3) {
+      // we have an explicit value treatment of this option, hence we reset `isFlag`.
+      isFlag = false;
+      value = fullMatch3[2];
+    }
   }
   else if (chars && chars.length === 1) {
-    // Only allow `-v-` or `-v+` when option `-v` is alone. Do *not* allow `-cfv-` or `-cfv+`!
-    value = charMatch[2] ? charMatch[2] === "+" : undefined;
+    // Only allow `-v-`, `-v+` and `-v=123` when option `-v` is alone. Do *not* allow `-cfv-` or `-cfv+` or `-cfv=123`!
+    if (charMatch1 && charMatch1[2]) {
+      // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
+      isFlag = true;
+      value = (charMatch1[2] === "+");
+    }
+    else if (charMatch2 && charMatch2[2]) {
+      // we have an explicit value treatment of this option, hence we reset `isFlag`.
+      isFlag = false;
+      value = charMatch2[2];
+    }
+    else {
+      // `-v` **sets** the `v` flag
+      value = true;
+    }
   }
 
   return {
@@ -716,6 +767,7 @@ var Arg = function (str) {
     chars: chars,
     full: full,
     value: value,
+    isFlag: isFlag,
     isValue: isValue
   };
 };
