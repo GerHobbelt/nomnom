@@ -1,7 +1,7 @@
-var _ = require("underscore"), 
-    chalk = require('chalk'), 
-    linewrap = require('@gerhobbelt/linewrap'), 
-    exit = require('exit');
+var _ = require("underscore"),
+    chalk = require("chalk"),
+    linewrap = require("@gerhobbelt/linewrap"),
+    exit = require("exit");
 
 
 var retArgs = function (s) {
@@ -31,13 +31,13 @@ var defaultColorConfig = _.extend({}, noColorConfig, {
 
 
 function ArgParser() {
-   this.commands = {};  // expected commands
-   this.specs = {};     // option specifications
+  this.commands = {};   // expected commands
+  this.specs = {};      // option specifications
 }
 
 ArgParser.prototype = {
   /* Add a command to the expected commands */
-  command : function (name) {
+  command: function (name) {
     var command;
     if (name) {
       command = this.commands[name] = {
@@ -53,27 +53,27 @@ ArgParser.prototype = {
 
     // facilitates command('name').options().cb().help()
     var chain = {
-      options : function (specs) {
+      options: function (specs) {
         command.specs = specs;
         return chain;
       },
-      opts : function (specs) {
+      opts: function (specs) {
         // old API
         return this.options(specs);
       },
-      option : function (name, spec) {
+      option: function (name, spec) {
         command.specs[name] = spec;
         return chain;
       },
-      callback : function (cb) {
+      callback: function (cb) {
         command.cb = cb;
         return chain;
       },
-      help : function (help) {
+      help: function (help) {
         command.help = help;
         return chain;
       },
-      usage : function (usage) {
+      usage: function (usage) {
         command._usage = usage;
         return chain;
       }
@@ -81,43 +81,45 @@ ArgParser.prototype = {
     return chain;
   },
 
-  nocommand : function () {
+  nocommand: function () {
     return this.command();
   },
 
-  options : function (specs) {
+  options: function (specs) {
     this.specs = specs;
     return this;
   },
 
-  opts : function (specs) {
+  opts: function (specs) {
     // old API
     return this.options(specs);
   },
 
-  globalOpts : function (specs) {
+  globalOpts: function (specs) {
     // old API
     return this.options(specs);
   },
 
-  option : function (name, spec) {
+  option: function (name, spec) {
     this.specs[name] = spec;
     return this;
   },
 
   _unknownOptionTreatment: true,
 
-  unknownOptionTreatment : function (enable) {
+  unknownOptionTreatment: function (enable) {
     if (typeof enable === "function") {
       this._unknownOptionTreatment = enable;
-    } else if (enable) {
+    }
+    else if (enable) {
       this._unknownOptionTreatment = function __treatUnknownOption__(options, name, value) {
         return {
           name: name,
           value: value
         };
       };
-    } else {
+    }
+    else {
       this._unknownOptionTreatment = function __treatUnknownOption__(options, name, value) {
         this.print("ERROR: unknown option '" + name + "' specified.", 1);
       };
@@ -127,47 +129,47 @@ ArgParser.prototype = {
 
   _autoShowUsage: true,
 
-  autoShowUsage : function (enable) {
+  autoShowUsage: function (enable) {
     this._autoShowUsage = (arguments.length === 0 || !!enable);
     return this;
   },
 
   _usage: null,
 
-  usage : function (usage) {
+  usage: function (usage) {
     this._usage = usage;
     return this;
   },
 
   print: null,
 
-  printer : function (print) {
+  printer: function (print) {
     this.print = print;
     return this;
   },
 
   _script: null,
 
-  script : function (script) {
+  script: function (script) {
     this._script = script;
     return this;
   },
 
-  scriptName : function (script) {
+  scriptName: function (script) {
     // old API
     return this.script(script);
   },
 
   _help: null,
 
-  help : function (help) {
+  help: function (help) {
     this._help = help;
     return this;
   },
 
   _extendHelp: null,
 
-  extendHelp : function(help) {
+  extendHelp: function (help) {
     this._extendHelp = help;
     return this;
   },
@@ -175,7 +177,7 @@ ArgParser.prototype = {
   _produceExplicitOptionsOnly: false,
 
   produceExplicitOptionsOnly: function (enable) {
-    this._produceExplicitOptionsOnly  = !!enable;
+    this._produceExplicitOptionsOnly = !!enable;
     return this;
   },
 
@@ -191,34 +193,35 @@ ArgParser.prototype = {
     return this;
   },
 
-  nocolors : function () {
+  nocolors: function () {
     this._colorConfig = _.extend({}, noColorConfig);
     return this;
   },
 
-  parseArgs : function (argv) {
+  parseArgs: function (argv) {
     // old API
     return this.parse(argv);
   },
 
-  nom : function (argv) {
+  nom: function (argv) {
     return this.parse(argv);
   },
 
-  parse : function (argv) {
+  parse: function (argv) {
     var that = this;
     this.print = this.print || function (str, code) {
-      if (code > 0) {
-        console.error(str);
-        exit(code);
-      } else {
-        console.log(str);
-        exit(0);
-      }
-    };
+        if (code > 0) {
+          console.error(str);
+          exit(code);
+        }
+        else {
+          console.log(str);
+          exit(0);
+        }
+      };
     this._help = this._help || "";
-    this._script = this._script || process.argv[0] + " "
-          + require('path').basename(process.argv[1]);
+    this._script = this._script || process.argv[0] + " " 
+        + require("path").basename(process.argv[1]);
     this.specs = this.specs || {};
     this.unknownOptionTreatment(this._unknownOptionTreatment);
 
@@ -226,7 +229,7 @@ ArgParser.prototype = {
 
     // Automatically print the help when no argument has been provided at all:
     if (this._autoShowUsage && argv.length === 0) {
-      argv[0] = '-h';
+      argv[0] = "-h";
     }
 
     var notFlags = [];
@@ -241,72 +244,78 @@ ArgParser.prototype = {
         commandExpected = !_(this.commands).isEmpty();
 
     if (commandExpected) {
-       if (command) {
-          _(this.specs).extend(command.specs);
-          this._script += " " + command.name;
-          if (command.help) {
-            this._help = command.help;
-          }
-          this.command = command;
-       }
-       else if (arg) {
-          return this.print(this._script + ": no such command '" + arg + "'", 1);
-       }
-       else {
-          // no command but command expected e.g. 'git -v'
-          var helpStringBuilder = {
-            list : function () {
-               return 'one of: ' + _(this.commands).keys().join(", ");
-            },
-            twoColumn : function () {
-              // find the longest command name to ensure horizontal alignment
-              var maxLength = _(this.commands).max(function (cmd) {
-                return cmd.name.length;
-              }).name.length;
+      if (command) {
+        _(this.specs).extend(command.specs);
+        this._script += " " + command.name;
+        if (command.help) {
+          this._help = command.help;
+        }
+        this.command = command;
+      }
+      else if (arg) {
+        return this.print(this._script + ": no such command '" + arg + "'", 1);
+      }
+      else {
+        // no command but command expected e.g. 'git -v'
+        var helpStringBuilder = {
+          list: function () {
+            return "one of: " + _(this.commands).keys().join(", ");
+          },
+          twoColumn: function () {
+            // find the longest command name to ensure horizontal alignment
+            var maxLength = _(this.commands).max(function (cmd) {
+              return cmd.name.length;
+            }).name.length;
 
-              var cmdHelp;
-              if (maxLength <= 12) {
-                // create the two column text strings
-                cmdHelp = _.map(this.commands, function (cmd, name) {
-                  var diff = maxLength - name.length;
-                  var pad = new Array(diff + 4).join(" ");
-                  return "  " + [ name, pad, cmd.help ].join(" ");
-                });
-              } else {
-                // create a two column output where the second column interleaves
-                // the first. The second column is indented 8 spaces.
-                var pad = new Array(8 + 1).join(" ");
-                cmdHelp = _.map(this.commands, function (cmd, name) {
-                  return "  " + [ name, "\n", pad, " ", cmd.help ].join("");
-                });
-              }
-              return "\n" + cmdHelp.join("\n");
+            var cmdHelp;
+            if (maxLength <= 12) {
+              // create the two column text strings
+              cmdHelp = _.map(this.commands, function (cmd, name) {
+                var diff = maxLength - name.length;
+                var pad = new Array(diff + 4).join(" ");
+                return "  " + [name, pad, cmd.help].join(" ");
+              });
             }
-          };
-
-          // if there are a small number of commands and all have help strings,
-          // display them in a two column table; otherwise use the brief version.
-          // The arbitrary choice of "20" comes from the number commands git
-          // displays as "common commands"
-          var helpType = 'list';
-          if (_(this.commands).size() <= 20) {
-            if (_(this.commands).every(function (cmd) { return cmd.help; })) {
-                helpType = 'twoColumn';
+            else {
+              // create a two column output where the second column interleaves
+              // the first. The second column is indented 8 spaces.
+              var pad = new Array(8 + 1).join(" ");
+              cmdHelp = _.map(this.commands, function (cmd, name) {
+                return "  " + [name, "\n", pad, " ", cmd.help].join("");
+              });
             }
+            return "\n" + cmdHelp.join("\n");
           }
+        };
 
-          this.specs.command = {
-            position: 0,
-            help: helpStringBuilder[helpType].call(this)
-          };
-
-          if (this.fallback) {
-            _(this.specs).extend(this.fallback.specs);
-            this._help = this.fallback.help;
-          } else {
-            this.specs.command.required = true;
+        // if there are a small number of commands and all have help strings,
+        // display them in a two column table; otherwise use the brief version.
+        // The arbitrary choice of "20" comes from the number commands git
+        // displays as "common commands"
+        var helpType = "list";
+        if (_(this.commands).size() <= 20) {
+          if (
+            _(this.commands).every(function (cmd) {
+              return cmd.help;
+            })
+          ) {
+            helpType = "twoColumn";
           }
-       }
+        }
+
+        this.specs.command = {
+          position: 0,
+          help: helpStringBuilder[helpType].call(this)
+        };
+
+        if (this.fallback) {
+          _(this.specs).extend(this.fallback.specs);
+          this._help = this.fallback.help;
+        }
+        else {
+          this.specs.command.required = true;
+        }
+      }
     }
 
     if (this.specs.length === undefined) {
@@ -337,13 +346,15 @@ ArgParser.prototype = {
     /* -- cmd --flags */
     if (notFlags.length) {
       this.setOption(options, "--", notFlags);
-      args = args.concat(notFlags.map(function (d) {
-        return {
-          str: d,
-          value: d,
-          isValue: true
-        };
-      }));
+      args = args.concat(
+        notFlags.map(function (d) {
+          return {
+            str: d,
+            value: d,
+            isValue: true
+          };
+        })
+      );
     }
 
     args = args.concat(Arg());
@@ -356,12 +367,15 @@ ArgParser.prototype = {
 
       /* positional */
       if (arg.isValue) {
-        if (arg.str in that.commands &&
-            commandExpected &&
-            !command &&
-            !that.fallback) {
+        if (
+          arg.str in that.commands &&
+          commandExpected &&
+          !command &&
+          !that.fallback
+        ) {
           that.print("commands can not be interspersed with arguments\n\n" + that.getUsage(), 1);
-        } else {
+        }
+        else {
           positionals.push(arg.value);
         }
       }
@@ -392,8 +406,8 @@ ArgParser.prototype = {
               that.setOption(options, c, flagValue);
             }
             else {
-              that.print("'-" + (opt.name || c) + "'"
-                + " expects a value\n\n" + that.getUsage(), 1);
+              that.print("'-" + (opt.name || c) + "'" 
+                  + " expects a value\n\n" + that.getUsage(), 1);
             }
           }
           else {
@@ -427,15 +441,15 @@ ArgParser.prototype = {
               that.setOption(options, arg.full, opt.default);
             }
             else {
-              that.print("'--" + (opt.name || arg.full) + "'"
-                + " expects a value\n\n" + that.getUsage(), 1);
+              that.print("'--" + (opt.name || arg.full) + "'" 
+                  + " expects a value\n\n" + that.getUsage(), 1);
             }
           }
           else {
             /* --flag / --no-flag */
             that.setOption(options, arg.full, value);
           }
-        } 
+        }
         else {
           that.setOption(options, arg.full, value);
         }
@@ -462,7 +476,8 @@ ArgParser.prototype = {
       if (opt.required && options[opt.name] === undefined) {
         if (opt.default !== undefined) {
           options[opt.name] = opt.default;
-        } else {
+        }
+        else {
           var msg = opt.name + " argument is required";
           msg = this._colorConfig.requiredArgColor(msg);
           //msg = this._nocolors ? msg : chalk.red(msg);
@@ -482,7 +497,7 @@ ArgParser.prototype = {
     return options;
   },
 
-  getUsage : function () {
+  getUsage: function () {
     if (this.command && this.command._usage) {
       return this.command._usage;
     }
@@ -499,7 +514,6 @@ ArgParser.prototype = {
     str += this._colorConfig.usageHeadingColor("Usage:");
     str += this._colorConfig.usageStringColor(" " + this._script);
 
-
     var positionals = _(this.specs).select(function (opt) {
       return opt.position !== undefined;
     });
@@ -509,9 +523,11 @@ ArgParser.prototype = {
     var options = _(this.specs).select(function (opt) {
       return opt.position === undefined;
     });
-    var showOptions = _(options).reject(function (opt) {
-      return opt.hidden;
-    }).toString();
+    var showOptions = _(options)
+      .reject(function (opt) {
+        return opt.hidden;
+      })
+      .toString();
 
     // assume there are no gaps in the specified pos. args
     positionals.forEach(function (pos) {
@@ -521,9 +537,10 @@ ArgParser.prototype = {
       if (!posStr) {
         posStr = pos.name || "arg" + pos.position;
         if (pos.required) {
-            posStr = "<" + posStr + ">";
-        } else {
-            posStr = "[" + posStr + "]";
+          posStr = "<" + posStr + ">";
+        }
+        else {
+          posStr = "[" + posStr + "]";
         }
         if (pos.list) {
           posStr += "...";
@@ -561,7 +578,6 @@ ArgParser.prototype = {
       var wrap = linewrap((longest < 12 ? longest + 5 : 8), console_width);
       str += this._colorConfig.positionalHelpColor(wrap(pos.help || ""));
       str += this._colorConfig.usageStringColor("\n");
-
     }, this);
     if (positionals.length && showOptions) {
       str += this._colorConfig.usageStringColor("\n");
@@ -581,31 +597,37 @@ ArgParser.prototype = {
 
           var defaults = (opt.default !== undefined ? "  [" + opt.default + "]" : "");
           var help = opt.help ? opt.help + defaults : "";
-if (0) {
-          // linewrap library is still buggy    :-()
-          var wrap = linewrap(console_width, {
-            whitespace: 'line',
-            respectLineBreaks: 'all',
-            //wrapLineIndentBase: / : /, 
-            //wrapLineIndent: 2,
-            wrapLineIndent: longest < 12 ? longest + 3 : 8
-          }); 
-} else {
-          var indent = longest < 12 ? longest + 3 : 8;
-          var indent_str = new Array(indent + 1).join(" ");
-          var wrap_master = linewrap(console_width - indent, {
-            whitespace: 'line',
-            respectLineBreaks: 'all',
-            wrapLineIndentBase: / : /, 
-            wrapLineIndent: 3,
-            //wrapLineIndent: longest < 12 ? longest + 3 : 8,
-            lineBreakScheme: "unix"
-          });
-          var wrap = function (text) {
-            var s = wrap_master(text);
-            return s.split("\n").map(function (l) { return indent_str + l; }).join("\n");
-          };
-} 
+          if (0) {
+            // linewrap library is still buggy    :-()
+            var wrap = linewrap(console_width, {
+              whitespace: "line",
+              respectLineBreaks: "all",
+              //wrapLineIndentBase: / : /,
+              //wrapLineIndent: 2,
+              wrapLineIndent: longest < 12 ? longest + 3 : 8
+            });
+          }
+          else {
+            var indent = longest < 12 ? longest + 3 : 8;
+            var indent_str = new Array(indent + 1).join(" ");
+            var wrap_master = linewrap(console_width - indent, {
+              whitespace: "line",
+              respectLineBreaks: "all",
+              wrapLineIndentBase: / : /,
+              wrapLineIndent: 3,
+              //wrapLineIndent: longest < 12 ? longest + 3 : 8,
+              lineBreakScheme: "unix"
+            });
+            var wrap = function (text) {
+              var s = wrap_master(text);
+              return s
+                .split("\n")
+                .map(function (l) {
+                  return indent_str + l;
+                })
+                .join("\n");
+            };
+          }
           str += this._colorConfig.helpColor(wrap(help));
           str += this._colorConfig.usageStringColor("\n");
         }
@@ -615,7 +637,7 @@ if (0) {
     if (this._help) {
       str += this._colorConfig.usageStringColor("\n" + this._help);
     }
-    
+
     if (this._extendHelp) {
       str += "\n" + this._extendHelp;
     }
@@ -628,7 +650,7 @@ ArgParser.prototype.opt = function (arg) {
   var match = Opt({ __nomnom_dummy__: true });
   this.specs.forEach(function (opt) {
     if (opt.matches(arg)) {
-       match = opt;
+      match = opt;
     }
   });
   return match;
@@ -645,7 +667,7 @@ ArgParser.prototype.setOption = function (options, arg, value) {
     }
     arg = opt.name;
     value = opt.value;
-  } 
+  }
 
   if (option.callback) {
     var message = option.callback(value);
@@ -656,20 +678,20 @@ ArgParser.prototype.setOption = function (options, arg, value) {
   }
 
   if (option.type != "string") {
-     try {
-       // infer type by JSON parsing the string
-       value = JSON.parse(value);
-     }
-     catch(e) {}
+    try {
+      // infer type by JSON parsing the string
+      value = JSON.parse(value);
+    } 
+    catch (e) {}
   }
 
   if (option.transform) {
-     value = option.transform(value);
+    value = option.transform(value);
   }
 
   var name = option.name || arg;
   if (option.choices && option.choices.indexOf(value) === -1) {
-     this.print(name + " must be one of: " + option.choices.join(", "), 1);
+    this.print(name + " must be one of: " + option.choices.join(", "), 1);
   }
 
   if (option.list) {
@@ -689,11 +711,11 @@ ArgParser.prototype.setOption = function (options, arg, value) {
 /* an arg is an item that's actually parsed from the command line
    e.g. "-l", "-l+", "log.txt", or "--logfile=log.txt" */
 var Arg = function (str) {
-  var abbrRegex1 = /^-(\w+?)([+\-]?)$/,
-      abbrRegex2 = /^-(\w+)=(.+)$/,
-      fullRegex1 = /^--(no-)?(\w+(?:[^=+]*?[^=+\-])?)$/,     // --no-long-flag-name-123, --long-flag-name-123
-      fullRegex2 = /^--(\w+(?:[^=+]*?[^=+\-])?)([+\-])$/,    // --long-flag-name-123-, --long-flag-name-123+
-      fullRegex3 = /^--(\w+(?:[^=+]*?[^=+\-])?)=(.+)$/,      // --long-flag-name-123=value
+  var abbrRegex1 = /^-(\w+?)([+\-]?)$/,                     // -v, -v-, -cfv+
+      abbrRegex2 = /^-(\w+)=(.+)$/,                         // -o=value
+      fullRegex1 = /^--(no-)?(\w+(?:[^=+]*?[^=+\-])?)$/,    // --no-long-flag-name-123, --long-flag-name-123
+      fullRegex2 = /^--(\w+(?:[^=+]*?[^=+\-])?)([+\-])$/,   // --long-flag-name-123-, --long-flag-name-123+
+      fullRegex3 = /^--(\w+(?:[^=+]*?[^=+\-])?)=(.+)$/,     // --long-flag-name-123=value
       valRegex = /^[^\-].*/;
 
   var charMatch1 = abbrRegex1.exec(str),
@@ -717,15 +739,18 @@ var Arg = function (str) {
         // we have an explicit boolean/flag treatment of this option via `--no-[option]`, hence we set `isFlag`.
         isFlag = true;
         value = false;
-      } else {
+      }
+      else {
         // `--flag`: we may be processing a value or boolean option, hence we DO NOT set `isFlag`.
         value = true;
       }
-    } else if (fullMatch2) {
+    }
+    else if (fullMatch2) {
       // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
       isFlag = true;
       value = (fullMatch2[2] === "+");
-    } else if (fullMatch3) {
+    }
+    else if (fullMatch3) {
       // we have an explicit value treatment of this option, hence we reset `isFlag`.
       isFlag = false;
       value = fullMatch3[2];
@@ -759,27 +784,30 @@ var Arg = function (str) {
   };
 };
 
-
 /* an opt is what's specified by the user in opts hash */
 var Opt = function (opt) {
   var strings = (opt.string || "").split(","),
-      abbr, full, metavar, string, matches;
+      abbr,
+      full,
+      metavar,
+      string,
+      matches;
   for (var i = 0; i < strings.length; i++) {
     string = strings[i].trim();
-    if (matches = string.match(/^\-([^-])(?:\s+(.*))?$/)) {
+    if ((matches = string.match(/^\-([^-])(?:\s+(.*))?$/))) {
       abbr = matches[1];
       metavar = matches[2];
     }
-    else if (matches = string.match(/^\-\-(.+?)(?:[=\s]+(.+))?$/)) {
+    else if ((matches = string.match(/^\-\-(.+?)(?:[=\s]+(.+))?$/))) {
       full = matches[1];
       metavar = metavar || matches[2];
     }
   }
 
   matches = matches || [];
-  abbr = opt.abbr || abbr;   // e.g. v from -v
-  full = opt.full || full; // e.g. verbose from --verbose
-  metavar = opt.metavar || metavar;  // e.g. PATH from '--config=PATH'
+  abbr = opt.abbr || abbr;            // e.g. v from -v
+  full = opt.full || full;            // e.g. verbose from --verbose
+  metavar = opt.metavar || metavar;   // e.g. PATH from '--config=PATH'
 
   if (opt.string) {
     string = opt.string;
@@ -788,7 +816,7 @@ var Opt = function (opt) {
     string = "";
     if (abbr) {
       string += "-" + abbr;
-      if (metavar)
+      if (metavar) 
         string += " " + metavar;
       string += ", ";
     }
@@ -805,8 +833,13 @@ var Opt = function (opt) {
     full: full,
     metavar: metavar,
     matches: function (arg) {
-      return opt.full === arg || opt.abbr === arg || opt.position == arg
-        || opt.name === arg || (opt.list && arg >= opt.position);
+      return (
+        opt.full === arg ||
+        opt.abbr === arg ||
+        opt.position == arg ||
+        opt.name === arg ||
+        (opt.list && arg >= opt.position)
+      );
     }
   });
   return opt;
@@ -821,7 +854,7 @@ var nomnom = createParser();
 
 for (var i in nomnom) {
   if (typeof nomnom[i] === "function") {
-     createParser[i] = _(nomnom[i]).bind(nomnom);
+    createParser[i] = _(nomnom[i]).bind(nomnom);
   }
 }
 
