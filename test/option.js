@@ -76,7 +76,7 @@ exports.testOptionValue = function(test) {
       },
       'opt': {
         abbr: 'o',
-        optional: true,
+        optional: 'opt-val',          // when NOT `undefined`, this value is used when no value is specified in argv CLI
         default: 'optional.json',
         help: 'this option accepts an OPTIONAL value'
       },
@@ -92,7 +92,7 @@ exports.testOptionValue = function(test) {
    test.strictEqual(opts.debug, true);
    test.strictEqual(opts.config, 'cfg');
    test.strictEqual(opts.req, 'xxx');
-   test.strictEqual(opts.opt, 'optional.json');
+   test.strictEqual(opts.opt, 'opt-val');     // `optional` is picked up when option IS present in argv (compare with below, where `--opt` IS NOT present in argv!)
    test.strictEqual(opts.fruit, true);
 
 
@@ -110,7 +110,7 @@ exports.testOptionValue = function(test) {
    test.strictEqual(opts.debug, undefined);
    test.strictEqual(opts.config, 'config.json');
    test.strictEqual(opts.req, 'required.json');
-   test.strictEqual(opts.opt, 'optional.json');
+   test.strictEqual(opts.opt, 'opt-val');
    test.strictEqual(opts.fruit, false);
 
 
@@ -138,6 +138,15 @@ exports.testOptionValue = function(test) {
    test.strictEqual(opts.config, 'config.json');
    test.strictEqual(opts.req, 'required.json');
    test.strictEqual(opts.opt, false);
+   test.strictEqual(opts.fruit, true);
+
+
+   var opts = parser.parse("-f+".split(" "));
+
+   test.strictEqual(opts.debug, undefined);
+   test.strictEqual(opts.config, 'config.json');
+   test.strictEqual(opts.req, 'required.json');
+   test.strictEqual(opts.opt, 'optional.json');     // `default` is picked up when option IS NOT present in argv
    test.strictEqual(opts.fruit, true);
    test.done();
 };

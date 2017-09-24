@@ -416,21 +416,23 @@ ArgParser.prototype = {
               /* -k value */
               opt = that.opt(c);
               if (!opt.flag) {
-                if (val.isValue && !arg.isFlag) {
-                  that.setOption(options, c, val.value);
-                  return Arg(); // skip next turn - swallow arg
-                }
-                else if (arg.isFlag) {
-                  // explicit flag treatment of a non-flag option: produce a boolean value anyway.
+                if (arg.includesValue) {
+                  // option argv comes with a value in the same arg: `-v+`, `-x-`, `-l=9`
+                  // 
+                  // Also: explicit flag treatment of a non-flag option: produce a boolean value anyway.
                   // (this way you can have options which behave as both flag and value option simultaneously)
                   that.setOption(options, c, flagValue);
+                }
+                else if (val.isValue) {
+                  that.setOption(options, c, val.value);
+                  return Arg(); // skip next turn - swallow arg
                 }
                 else if (opt.__nomnom_dummy__) {
                   // unspecified options which have no value are considered to be *flag* options:
                   that.setOption(options, c, true);
                 }
-                else if (opt.optional) {
-                  that.setOption(options, c, opt.default);
+                else if (opt.optional !== undefined) {
+                  that.setOption(options, c, opt.optional);
                 }
                 else {
                   that.print("'-" + (opt.abbr || opt.name || c) + "'" 
@@ -459,21 +461,22 @@ ArgParser.prototype = {
           /* --key value */
           opt = that.opt(arg.full);
           if (!opt.flag) {
-            if (val.isValue && !arg.isFlag) {
+            if (arg.includesValue) {
+              // option argv comes with a value in the same arg: `-v+`, `-x-`, `-l=9`
+              // 
+              // Also: explicit flag treatment of a non-flag option: produce a boolean value anyway.
+              that.setOption(options, arg.full, arg.value);
+            }
+            else if (val.isValue) {
               that.setOption(options, arg.full, val.value);
               return Arg(); // skip next turn - swallow arg
-            }
-            else if (arg.isFlag) {
-              // explicit flag treatment of a non-flag option: produce a boolean value anyway.
-              // (this way you can have options which behave as both flag and value option simultaneously)
-              that.setOption(options, arg.full, arg.value);
             }
             else if (opt.__nomnom_dummy__) {
               // unspecified options which have no value are considered to be *flag* options:
               that.setOption(options, arg.full, true);
             }
-            else if (opt.optional) {
-              that.setOption(options, arg.full, opt.default);
+            else if (opt.optional !== undefined) {
+              that.setOption(options, arg.full, opt.optional);
             }
             else {
               that.print("'--" + (opt.full || opt.name || arg.full) + "'" 
@@ -776,7 +779,7 @@ var Arg = function (str) {
       full = fullMatch1 ? fullMatch1[2] : fullMatch2 ? fullMatch2[1] : fullMatch3 ? fullMatch3[1] : null;
 
   var isValue = str !== undefined && (str === "" || valRegex.test(str));
-  var isFlag = undefined;
+  var includesValue = undefined;
   var value;
   if (isValue) {
     value = str;
@@ -784,35 +787,35 @@ var Arg = function (str) {
   else if (full) {
     if (fullMatch1) {
       if (fullMatch1[1]) {
-        // we have an explicit boolean/flag treatment of this option via `--no-[option]`, hence we set `isFlag`.
-        isFlag = true;
+        // we have an explicit boolean/flag treatment of this option via `--no-[option]`, hence we set `includesValue`.
+        includesValue = true;
         value = false;
       }
       else {
-        // `--flag`: we may be processing a value or boolean option, hence we DO NOT set `isFlag`.
+        // `--flag`: we may be processing a value or boolean option, hence we DO NOT set `includesValue`.
         value = true;
       }
     }
     else if (fullMatch2) {
-      // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
-      isFlag = true;
+      // we have an explicit boolean/flag treatment of this option, hence we set `includesValue`.
+      includesValue = true;
       value = (fullMatch2[2] === "+");
     }
     else if (fullMatch3) {
-      // we have an explicit value treatment of this option, hence we reset `isFlag`.
-      isFlag = false;
+      // we have an explicit value treatment of this option, hence we set `includesValue`.
+      includesValue = true;
       value = fullMatch3[2];
     }
   }
   else if (chars) {
     if (charMatch1 && charMatch1[2]) {
-      // we have an explicit boolean/flag treatment of this option, hence we set `isFlag`.
-      isFlag = true;
+      // we have an explicit boolean/flag treatment of this option, hence we set `includesValue`.
+      includesValue = true;
       value = (charMatch1[2] === "+");
     }
     else if (charMatch2 && charMatch2[2]) {
-      // we have an explicit value treatment of this option, hence we reset `isFlag`.
-      isFlag = false;
+      // we have an explicit value treatment of this option, hence we set `includesValue`.
+      includesValue = true;
       value = charMatch2[2];
     }
     else {
@@ -826,7 +829,7 @@ var Arg = function (str) {
     chars: chars,
     full: full,
     value: value,
-    isFlag: isFlag,
+    includesValue: includesValue,
     isValue: isValue
   };
 };
