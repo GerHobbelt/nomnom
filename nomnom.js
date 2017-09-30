@@ -226,8 +226,12 @@ ArgParser.prototype = {
   parse: function (argv) {
     var that = this;
     this.print = this.print || function (str, code) {
-        if (code > 0) {
+        if (code !== 0 && typeof code !== "undefined") {
           console.error(str);
+          // Anything that's NOT exit(0) is an error, 
+          // hence guarantee producing an error exit code:
+          code |= 0;                  // catch 'garbage in'
+          if (code <= 0) code = 255;  // catch more/other 'garbage in'
           exit(code);
         }
         else {
