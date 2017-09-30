@@ -698,68 +698,68 @@ ArgParser.prototype = {
       str += "\n" + this._extendHelp;
     }
     return str;
-  }
-};
+  },
 
-ArgParser.prototype.opt = function (arg) {
-  // get the specified opt for this parsed arg
-  var match = Opt({ __nomnom_dummy__: true });
-  this.specs.forEach(function (opt) {
-    if (opt.matches(arg)) {
-      match = opt;
+  opt: function (arg) {
+    // get the specified opt for this parsed arg
+    var match = Opt({ __nomnom_dummy__: true });
+    this.specs.forEach(function (opt) {
+      if (opt.matches(arg)) {
+        match = opt;
+      }
+    });
+    return match;
+  },
+
+  setOption: function (options, arg, value) {
+    var option = this.opt(arg);
+
+    if (option.__nomnom_dummy__ && typeof arg === "string" && arg !== "--") {
+      // unspecified options receive special treatment:
+      var opt = this._unknownOptionTreatment(options, arg, value);
+      if (!opt) {
+        return;
+      }
+      arg = opt.name;
+      value = opt.value;
     }
-  });
-  return match;
-};
 
-ArgParser.prototype.setOption = function (options, arg, value) {
-  var option = this.opt(arg);
+    if (option.callback) {
+      var message = option.callback(value);
 
-  if (option.__nomnom_dummy__ && typeof arg === "string" && arg !== "--") {
-    // unspecified options receive special treatment:
-    var opt = this._unknownOptionTreatment(options, arg, value);
-    if (!opt) {
-      return;
+      if (typeof message === "string") {
+        this.print(message, 1);
+      }
     }
-    arg = opt.name;
-    value = opt.value;
-  }
 
-  if (option.callback) {
-    var message = option.callback(value);
-
-    if (typeof message === "string") {
-      this.print(message, 1);
+    if (option.type != "string") {
+      try {
+        // infer type by JSON parsing the string
+        value = JSON.parse(value);
+      } 
+      catch (e) {}
     }
-  }
 
-  if (option.type != "string") {
-    try {
-      // infer type by JSON parsing the string
-      value = JSON.parse(value);
-    } 
-    catch (e) {}
-  }
+    if (option.transform) {
+      value = option.transform(value);
+    }
 
-  if (option.transform) {
-    value = option.transform(value);
-  }
+    var name = option.name || arg;
+    if (option.choices && option.choices.indexOf(value) === -1) {
+      this.print(name + " must be one of: " + option.choices.join(", "), 1);
+    }
 
-  var name = option.name || arg;
-  if (option.choices && option.choices.indexOf(value) === -1) {
-    this.print(name + " must be one of: " + option.choices.join(", "), 1);
-  }
-
-  if (option.list) {
-    if (!options[name]) {
-      options[name] = [value];
+    if (option.list) {
+      if (!options[name]) {
+        options[name] = [value];
+      }
+      else {
+        options[name].push(value);
+      }
     }
     else {
-      options[name].push(value);
+      options[name] = value;
     }
-  }
-  else {
-    options[name] = value;
   }
 };
 
