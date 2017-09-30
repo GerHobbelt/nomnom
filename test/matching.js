@@ -157,7 +157,7 @@ exports.testFlagsAbuse = function(test) {
    test.done();
 }
 
-exports.testNegativeFlags = function(test) {
+exports.testNegativeFlagsFailInSpec = function(test) {
    var o = {
       noLineNumbers: {
          abbr: 'n',
@@ -166,13 +166,26 @@ exports.testNegativeFlags = function(test) {
    };
 
    var p = nomnom();
-   p.print = function (msg, code) {
-      test.equal(code, 1);
-      test.ok(msg.indexOf("options MUST NOT start their 'full option name' with 'no-'") >= 0);
+   test.throws(function () {
+      p.options(o);
+   }, Error, /nomnom options MUST NOT start their 'full option name' with 'no-'/);
+
+   test.done();
+};
+
+exports.testNegativeFlags = function(test) {
+   var o = {
+      lineNumbers: {
+         abbr: 'n',
+         full: 'line-numbers'
+      }
    };
+
+   var p = nomnom();
    p.options(o);
 
-   // var options = p.parse(["--no-line-numbers"]);
+   var options = p.parse(["--no-line-numbers"]);
+   test.strictEqual(options.lineNumbers, false);
 
    test.done();
 }

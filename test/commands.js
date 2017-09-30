@@ -27,7 +27,7 @@ exports.testMissingCommand = function(test) {
    parser.command('run');
 
    parser.printer(function(string) {
-      test.equal(string, "test: no such command 'other'");
+      test.equal(string.split('\n')[0], "test: no such command 'other'");
       test.done();
    });
 

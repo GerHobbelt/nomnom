@@ -1,5 +1,4 @@
-var _ = require("underscore"),
-    chalk = require("chalk"),
+var chalk = require("chalk"),
     linewrap = require("@gerhobbelt/linewrap"),
     exit = require("exit");
 
@@ -19,8 +18,81 @@ var noColorConfig = {
 
 var isWin = /^win/.test(process.platform);
 
+function shallow_copy_noclobber(dst, src) {
+  for (var k in src) {
+    if (typeof dst[k] === 'undefined' && Object.prototype.hasOwnProperty.call(src, k)) {
+      dst[k] = src[k];
+    }
+  }
+}
 
-var defaultColorConfig = _.extend({}, noColorConfig, {
+// shallow extend of objects: straight copy of simple `src` values into `dst`.
+// 
+// last mention of an attribute wins: that one overwrites the same-named attribute in `dst`.
+function extend(dst /* , ...src */) {
+  if (!dst) {
+    dst = {};
+  }
+  var src = Array.prototype.slice.call(arguments, 1);
+  for (var i = 0, len = src.length; i < len; i++) {
+    var o = src[i];
+    if (o) {
+      var l = Object.keys(o);
+      for (var i = 0, len = l.length; i < len; i++) {
+        var k = l[i];
+        dst[k] = o[k];
+      }
+    }
+  }
+  return dst;
+}
+
+function forEach(obj, cb) {
+  var l = Object.keys(obj);
+  for (var i = 0, len = l.length; i < len; i++) {
+    var k = l[i];
+    var rv = cb(obj[k], k);
+    // when `cb` returns a value, update the entry in the hash/object:
+    if (rv) {
+      obj[k] = rv;
+    }
+  }
+}
+
+function map(obj, cb) {
+  var rv = [];
+  var l = Object.keys(obj);
+  for (var i = 0, len = l.length; i < len; i++) {
+    var k = l[i];
+    rv[i] = cb(obj[k], k);
+  }
+  return rv;
+}
+
+function find(obj, cb) {
+  var l = Object.keys(obj);
+  for (var i = 0, len = l.length; i < len; i++) {
+    var k = l[i];
+    if (cb(obj[k], k)) {
+      return obj[k];
+    }
+  }
+  return undefined;
+}
+
+function filter(obj, cb) {
+  var rv = [];
+  var l = Object.keys(obj);
+  for (var i = 0, len = l.length; i < len; i++) {
+    var k = l[i];
+    if (cb(obj[k], k)) {
+      rv.push(obj[k]);
+    }
+  }
+  return rv;
+}
+
+var defaultColorConfig = extend({}, noColorConfig, {
   usageHeadingColor: chalk.bold,
   usageStringColor: chalk /* .stripColor */,
   positionalHelpColor: chalk.grey,
@@ -30,10 +102,10 @@ var defaultColorConfig = _.extend({}, noColorConfig, {
 });
 
 
-function ArgParser() {
+var ArgParser = function () {
   this.commands = {};   // expected commands
   this.specs = {};      // option specifications
-}
+};
 
 ArgParser.prototype = {
   /* Add a command to the expected commands */
@@ -54,7 +126,13 @@ ArgParser.prototype = {
     // facilitates command('name').options().cb().help()
     var chain = {
       options: function (specs) {
-        command.specs = specs;
+        command.specs = extend({}, specs);
+
+        // specs is a hash, not an array
+        forEach(command.specs, function (opt, name) {
+          return Opt(opt, name);
+        });
+
         return chain;
       },
       opts: function (specs) {
@@ -62,7 +140,7 @@ ArgParser.prototype = {
         return this.options(specs);
       },
       option: function (name, spec) {
-        command.specs[name] = spec;
+        command.specs[name] = Opt(spec, name);
         return chain;
       },
       callback: function (cb) {
@@ -86,7 +164,13 @@ ArgParser.prototype = {
   },
 
   options: function (specs) {
-    this.specs = specs;
+    this.specs = extend({}, specs);
+
+    // specs is a hash, not an array
+    forEach(this.specs, function (opt, name) {
+      return Opt(opt, name);
+    });
+
     return this;
   },
 
@@ -101,7 +185,7 @@ ArgParser.prototype = {
   },
 
   option: function (name, spec) {
-    this.specs[name] = spec;
+    this.specs[name] = Opt(spec, name);
     return this;
   },
 
@@ -121,7 +205,7 @@ ArgParser.prototype = {
     }
     else {
       this._unknownOptionTreatment = function __treatUnknownOption__(options, name, value) {
-        this.print("ERROR: unknown option '" + name + "' specified.", 1);
+        this.print("ERROR: unknown option '" + name + "' specified." + this.getUsageOnError(), 1);
       };
     }
     return this;
@@ -130,7 +214,7 @@ ArgParser.prototype = {
   _autoShowUsage: true,
 
   autoShowUsage: function (enable) {
-    this._autoShowUsage = (arguments.length === 0 || !!enable);
+    this._autoShowUsage = (typeof enable === "undefined" || !!enable);
     return this;
   },
 
@@ -202,15 +286,15 @@ ArgParser.prototype = {
     return this;
   },
 
-  _colorConfig: _.extend({}, defaultColorConfig),
+  _colorConfig: extend({}, defaultColorConfig),
 
   setColors: function (colorConfig) {
-    this._colorConfig = _.extend({}, defaultColorConfig, colorConfig);
+    this._colorConfig = extend({}, defaultColorConfig, colorConfig);
     return this;
   },
 
   nocolors: function () {
-    this._colorConfig = _.extend({}, noColorConfig);
+    this._colorConfig = extend({}, noColorConfig);
     return this;
   },
 
@@ -242,8 +326,42 @@ ArgParser.prototype = {
     this._help = this._help || "";
     this._script = this._script || process.argv[0] + " " 
         + require("path").basename(process.argv[1]);
-    this.specs = this.specs || {};
+    // this.specs = this.specs || {};
     this.unknownOptionTreatment(this._unknownOptionTreatment);
+
+    function helpStringBuilder(type) {
+      switch (type) {
+      case "list":
+      default:
+        return "one of: " + Object.keys(this.commands).join(", ");
+    
+      case "twoColumn": 
+        // find the longest command name to ensure horizontal alignment
+        var maxLength = 0;
+        forEach(this.commands, function (cmd) {
+          maxLength = Math.max(maxLength, cmd.name.length);
+        });
+
+        var cmdHelp;
+        if (maxLength <= 12) {
+          // create the two column text strings
+          cmdHelp = map(this.commands, function (cmd, name) {
+            var diff = maxLength - name.length;
+            var pad = new Array(diff + 4).join(" ");
+            return "  " + [name, pad, cmd.help].join(" ");
+          });
+        }
+        else {
+          // create a two column output where the second column interleaves
+          // the first. The second column is indented 8 spaces.
+          var pad = new Array(8 + 1).join(" ");
+          cmdHelp = map(this.commands, function (cmd, name) {
+            return "  " + [name, "\n", pad, " ", cmd.help].join("");
+          });
+        }
+        return "\n" + cmdHelp.join("\n");
+      }
+    }
 
     argv = argv || process.argv.slice(2);
 
@@ -259,13 +377,13 @@ ArgParser.prototype = {
       argv = argv.slice(0, doubleDashIndex);
     }
 
-    var arg = Arg(argv[0]).isValue && argv[0],
-        command = arg && this.commands[arg],
-        commandExpected = !_(this.commands).isEmpty();
+    var arg = Arg(argv[0]).isValue && argv[0];
+    var command = arg && this.commands[arg];
+    var commandExpected = (Object.keys(this.commands).length > 0);
 
     if (commandExpected) {
       if (command) {
-        _(this.specs).extend(command.specs);
+        this.specs = extend(this.specs, command.specs);
         this._script += " " + command.name;
         if (command.help) {
           this._help = command.help;
@@ -273,85 +391,40 @@ ArgParser.prototype = {
         this.command = command;
       }
       else if (arg) {
-        return this.print(this._script + ": no such command '" + arg + "'", 1);
+        return this.print(this._script + ": no such command '" + arg + "'" + this.getUsageOnError(), 1);
       }
       else {
         // no command but command expected e.g. 'git -v'
-        var helpStringBuilder = {
-          list: function () {
-            return "one of: " + _(this.commands).keys().join(", ");
-          },
-          twoColumn: function () {
-            // find the longest command name to ensure horizontal alignment
-            var maxLength = _(this.commands).max(function (cmd) {
-              return cmd.name.length;
-            }).name.length;
-
-            var cmdHelp;
-            if (maxLength <= 12) {
-              // create the two column text strings
-              cmdHelp = _.map(this.commands, function (cmd, name) {
-                var diff = maxLength - name.length;
-                var pad = new Array(diff + 4).join(" ");
-                return "  " + [name, pad, cmd.help].join(" ");
-              });
-            }
-            else {
-              // create a two column output where the second column interleaves
-              // the first. The second column is indented 8 spaces.
-              var pad = new Array(8 + 1).join(" ");
-              cmdHelp = _.map(this.commands, function (cmd, name) {
-                return "  " + [name, "\n", pad, " ", cmd.help].join("");
-              });
-            }
-            return "\n" + cmdHelp.join("\n");
-          }
-        };
-
+        //
         // if there are a small number of commands and all have help strings,
         // display them in a two column table; otherwise use the brief version.
         // The arbitrary choice of "20" comes from the number commands git
         // displays as "common commands"
         var helpType = "list";
-        if (_(this.commands).size() <= 20) {
+        if (Object.keys(this.commands).length <= 20) {
           if (
-            _(this.commands).every(function (cmd) {
-              return cmd.help;
-            })
+            filter(this.commands, function (cmd) {
+              return !cmd.help;
+            }).length === 0
           ) {
             helpType = "twoColumn";
           }
         }
 
-        this.specs.command = {
+        this.option("command", {
           position: 0,
-          help: helpStringBuilder[helpType].call(this)
-        };
+          help: helpStringBuilder.call(this, helpType)
+        });
 
         if (this.fallback) {
-          _(this.specs).extend(this.fallback.specs);
+          this.specs = extend(this.specs, this.fallback.specs);
           this._help = this.fallback.help;
         }
         else {
-          this.specs.command.required = true;
+          this.opt("command").required = true;
         }
       }
     }
-
-    if (this.specs.length === undefined) {
-      // specs is a hash not an array
-      this.specs = _(this.specs).map(function (opt, name) {
-        opt.name = name;
-        return opt;
-      });
-    }
-    this.specs = this.specs.map(function (opt) {
-      var o = Opt(opt);
-      if (o.full && /^no-/.test(o.full)) {
-        that.print("ERROR: nomnom options MUST NOT start their 'full option name' with 'no-', such as '" + o.full + "'", 1);
-      }
-      return o;
-    });
 
     if (argv.indexOf("--help") >= 0 || argv.indexOf("-h") >= 0) {
       return this.print(this.getUsage());
@@ -506,28 +579,28 @@ ArgParser.prototype = {
     options._ = positionals;
 
     if (!this._produceExplicitOptionsOnly) {
-      this.specs.forEach(function (opt) {
+      forEach(this.specs, function (opt) {
         if (opt.default !== undefined && options[opt.name] === undefined) {
           options[opt.name] = opt.default;
         }
-      }, this);
+      });
     }
 
     // exit if required arg isn't present
-    this.specs.forEach(function (opt) {
+    forEach(this.specs, function (opt) {
       if (opt.required && options[opt.name] === undefined) {
         if (opt.default !== undefined) {
           options[opt.name] = opt.default;
         }
         else {
           var msg = opt.name + " argument is required.";
-          msg = this._colorConfig.requiredArgColor(msg);
-          //msg = this._nocolors ? msg : chalk.red(msg);
+          msg = that._colorConfig.requiredArgColor(msg);
+          //msg = that._nocolors ? msg : chalk.red(msg);
 
-          this.print("\n" + msg + this.getUsageOnError(), 1);
+          that.print("\n" + msg + that.getUsageOnError(), 1);
         }
       }
-    }, this);
+    });
 
     if (command && command.cb) {
       command.cb(options);
@@ -569,20 +642,18 @@ ArgParser.prototype = {
     str += this._colorConfig.usageHeadingColor("Usage:");
     str += this._colorConfig.usageStringColor(" " + this._script);
 
-    var positionals = _(this.specs).select(function (opt) {
+    var positionals = filter(this.specs, function (opt) {
       return opt.position !== undefined;
     });
-    positionals = _(positionals).sortBy(function (opt) {
-      return opt.position;
+    positionals = positionals.sort(function (opt1, opt2) {
+      return Math.sign(opt1.position - opt2.position);
     });
-    var options = _(this.specs).select(function (opt) {
+    var options = filter(this.specs, function (opt) {
       return opt.position === undefined;
     });
-    var showOptions = _(options)
-      .reject(function (opt) {
-        return opt.hidden;
-      })
-      .toString();
+    var showOptions = filter(options, function (opt) {
+      return !opt.hidden;
+    }).length;
 
     // assume there are no gaps in the specified pos. args
     positionals.forEach(function (pos) {
@@ -623,7 +694,7 @@ ArgParser.prototype = {
     var console_width = (process.stdout && process.stdout.columns) || 80;
 
     var longest = positionals.reduce(function (max, pos) {
-      return pos.name.length > max ? pos.name.length : max;
+      return Math.max(pos.name.length, max);
     }, 0);
 
     positionals.forEach(function (pos) {
@@ -703,11 +774,9 @@ ArgParser.prototype = {
   opt: function (arg) {
     // get the specified opt for this parsed arg
     var match = Opt({ __nomnom_dummy__: true });
-    this.specs.forEach(function (opt) {
-      if (opt.matches(arg)) {
-        match = opt;
-      }
-    });
+    match = find(this.specs, function (opt) {
+      return opt.matches(arg);
+    }) || match;
     return match;
   },
 
@@ -732,7 +801,7 @@ ArgParser.prototype = {
       }
     }
 
-    if (option.type != "string") {
+    if (option.type !== "string") {
       try {
         // infer type by JSON parsing the string
         value = JSON.parse(value);
@@ -840,9 +909,9 @@ var Arg = function (str) {
 };
 
 /* an opt is what's specified by the user in opts hash */
-var Opt = function (opt) {
-  var strings = (opt.string || "").split(","),
-      abbr,
+var Opt = function (opt, name) {
+  var strings = (opt.string || "").split(",");
+  var abbr,
       full,
       metavar,
       string,
@@ -859,10 +928,13 @@ var Opt = function (opt) {
     }
   }
 
-  matches = matches || [];
   abbr = opt.abbr || abbr;            // e.g. v from -v
   full = opt.full || full;            // e.g. verbose from --verbose
   metavar = opt.metavar || metavar;   // e.g. PATH from '--config=PATH'
+
+  if (full && /^no-/.test(full)) {
+    throw new Error("ERROR: nomnom options MUST NOT start their 'full option name' with 'no-', such as '" + full + "'");
+  }
 
   if (opt.string) {
     string = opt.string;
@@ -875,14 +947,14 @@ var Opt = function (opt) {
         string += " " + metavar;
       string += ", ";
     }
-    string += "--" + (full || opt.name);
+    string += "--" + (full || opt.name || name);
     if (metavar) {
       string += " " + metavar;
     }
   }
 
-  opt = _(opt).extend({
-    name: opt.name || full || abbr,
+  opt = extend(opt, {
+    name: opt.name || name || full || abbr,
     string: string,
     abbr: abbr,
     full: full,
@@ -905,12 +977,56 @@ var createParser = function () {
   return new ArgParser();
 };
 
-var nomnom = createParser();
-
-for (var i in nomnom) {
-  if (typeof nomnom[i] === "function") {
-    createParser[i] = _(nomnom[i]).bind(nomnom);
+for (var k in ArgParser.prototype) {
+  if (Object.prototype.hasOwnProperty.call(ArgParser.prototype, k)) {
+    createParser[k] = ArgParser.prototype[k];
   }
 }
+var nomnom = createParser();
+for (var k in nomnom) {
+  if (Object.prototype.hasOwnProperty.call(nomnom, k)) {
+    createParser[k] = nomnom[k];
+  }
+}
+
+if (typeof Object.setPrototypeOf === 'function') {
+  Object.setPrototypeOf(createParser, ArgParser.prototype);
+} else {
+  createParser.prototype = Object.create(ArgParser.prototype);
+}
+createParser.prototype.constructor = createParser;
+createParser.prototype.name = 'createParser';
+
+function deepClone(from) {
+  if (from == null || typeof from !== 'object') return from;
+  if (from.constructor === Array) {
+    var to = [];
+    for (var i = 0, len = from.length; i < len; i++) {
+      to[i] = deepClone(from[i]);
+    }
+    return to;
+  }
+  if (typeof from.constructor === 'function') {
+    var to = new from.constructor();
+    for (var k in from) {
+      if (Object.prototype.hasOwnProperty.call(from, k)) {
+        to[k] = deepClone(from[k]);
+      }
+    }
+    return to;
+  }
+  return to;
+}
+
+createParser.clone = function () {
+  var rv = this();
+
+  for (var k in this) {
+    if (Object.prototype.hasOwnProperty.call(this, k)) {
+      rv[k] = deepClone(this[k]);
+    }
+  }
+  return rv;
+};
 
 module.exports = createParser;
