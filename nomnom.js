@@ -647,7 +647,8 @@ ArgParser.prototype = {
           str += this._colorConfig.usageStringColor("   " + opt.string + (longest < 12 ? spaces(longest - opt.string.length) + "   " : "\n"));
 
           var defaults = (opt.default !== undefined ? "  [" + opt.default + "]" : "");
-          var help = opt.help ? opt.help + defaults : "";
+          var choices = (opt.choices ? " (Must be one of: " + opt.choices.join(", ") + ")" : "");
+          var help = opt.help ? opt.help + choices + defaults : "";
           if (0) {
             // linewrap library is still buggy    :-()
             var wrap = linewrap(console_width, {
