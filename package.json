@@ -1,7 +1,7 @@
 {
   "name": "@gerhobbelt/nomnom",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.4-25",
+  "version": "1.8.4-26",
   "author": "Heather Arthur <fayearthur@gmail.com>",
   "contributors": [
     "Gregory Banks <quaid@kuatowares.com>",

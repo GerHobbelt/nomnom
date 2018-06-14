@@ -109,7 +109,7 @@ Each command generates its own usage message when `-h` or `--help` is specified 
 
 # Usage
 
-Nomnom prints out a usage message if `--help` or `-h` is an argument. If no commands are called (the script is simply run without arguments), `-h` will be called automatically unless you've disabled this feature using the `.autoShowHelp(false)` API call. 
+Nomnom prints out a usage message if `--help` or `-h` is an argument. If no commands are called (the script is simply run without arguments), `-h` will be called automatically unless you've disabled this feature using the `.autoShowUsage(false)` API call. 
 
 Usage for these options in `test.js`:
 
