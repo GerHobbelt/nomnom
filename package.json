@@ -30,10 +30,10 @@
   },
   "dependencies": {
     "@gerhobbelt/linewrap": "0.2.2-3",
-    "chalk": "2.1.0",
+    "chalk": "2.4.1",
     "exit": "0.1.2"
   },
   "devDependencies": {
-    "nodeunit": "0.11.1"
+    "nodeunit": "0.11.3"
   }
 }
