@@ -15,7 +15,7 @@
 nomnom is an option parser for node. It noms your args and gives them back to you in a hash.
 
 ```javascript
-var opts = require("nomnom")
+var opts = require("@gerhobbelt/nomnom")
    .option('debug', {
       abbr: 'd',
       flag: true,
@@ -42,7 +42,7 @@ if (opts.debug)
 You don't have to specify anything if you don't want to:
 
 ```javascript
-var opts = require("nomnom").parse();
+var opts = require("@gerhobbelt/nomnom").parse();
 
 var url = opts[0];     // get the first positional arg
 var file = opts.file   // see if --file was specified
@@ -55,7 +55,7 @@ var extras = opts._    // get an array of the unmatched, positional args
 
 for [node.js](http://nodejs.org/) and [npm](http://github.com/isaacs/npm):
 
-	npm install nomnom
+	npm install @gerhobbelt/nomnom
 
 
 # More Details
@@ -78,7 +78,7 @@ Values are JSON parsed, so `--debug=true --count=3 --file=log.txt` would give yo
 Nomnom supports command-based interfaces (e.g. with git: `git add -p` and `git rebase -i` where `add` and `rebase` are the commands):
 
 ```javascript
-var parser = require("nomnom");
+var parser = require("@gerhobbelt/nomnom");
 
 parser.command('browser')
    .callback(function(opts) {
@@ -114,7 +114,7 @@ Nomnom prints out a usage message if `--help` or `-h` is an argument. If no comm
 Usage for these options in `test.js`:
 
 ```javascript
-var opts = require("nomnom")
+var opts = require("@gerhobbelt/nomnom")
    .script("runtests")
    .options({
       path: {
