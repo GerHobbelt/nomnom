@@ -7,6 +7,9 @@
     "Gregory Banks <quaid@kuatowares.com>",
     "Ger Hobbelt <ger@hobbelt.com>"
   ],
+  "files": [
+    "nomnom.js"
+  ],
   "scripts": {
     "test": "bash ./node_modules/.bin/nodeunit test/*.js",
     "log": "git log --tags --decorate=short --pretty=fuller > CHANGELOG.md",
