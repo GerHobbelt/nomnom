@@ -603,10 +603,10 @@ ArgParser.prototype = {
     });
 
     if (command && command.cb) {
-      command.cb(options);
+      command.cb(options, command.name);
     }
     else if (this.fallback && this.fallback.cb) {
-      this.fallback.cb(options);
+      this.fallback.cb(options, (command && command.name));
     }
 
     return options;

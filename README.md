@@ -1,9 +1,11 @@
 > 
-> # deprecation notice
+> # deprecation notice for original
 > 
-> The original author's `nomnom` is deprecated; this (and other) forks is not: we continue to update this library.
+> The original author's `nomnom` is deprecated; this fork is not: we continue to update this library.
 > 
-> When you are unsure about using this library's fork (or others), you may wish to check out https://github.com/tj/commander.js, which should have most, if not all of the capability that nomnom has. Thank you!
+> When you are unsure about using this library's fork (or others), you may wish to check out https://github.com/tj/commander.js.
+>
+> Personally, I prefer using `nomnom` over `commander` or other option parsers, so I will keep this one. :-)
 > 
 
 # nomnom
@@ -81,7 +83,7 @@ Nomnom supports command-based interfaces (e.g. with git: `git add -p` and `git r
 var parser = require("@gerhobbelt/nomnom");
 
 parser.command('browser')
-   .callback(function(opts) {
+   .callback(function(opts, command) {
       runBrowser(opts.url);
    })
    .help("run browser tests");
@@ -96,7 +98,7 @@ parser.command('sanity')
       default: 'config.json',
       help: "json manifest of tests to run"
    })
-   .callback(function(opts) {
+   .callback(function(opts, command) {
       runSanity(opts.filename);
    })
    .help("run the sanity tests")
@@ -339,10 +341,20 @@ Overrides the usage printing function.
 
 Takes a command name and gives you a command object on which you can chain command options.
 
+When you provide a callback function via the `.callback()` API, then that callback will be invoked when the commandline has been parsed and the given command has been found there.
+See [`.callback()`](#callback) for details.
+
+When you did not provide a name argument or a null/undefined name, this API is equivalent to invoking `.nocommand()`.
+
 
 #### nocommand
 
 Gives a command object that will be used when no command is called.
+
+When you provide a callback function via the `.callback()` API, then that callback will be invoked when the commandline has been parsed and 
+*either* no command has been found there 
+*or* a command was found for whicch no callback has been specified.
+See [`.callback()`](#callback) for details.
 
 
 #### nocolors
@@ -399,7 +411,10 @@ Add options for this command as a hash of options keyed by name.
 
 #### callback
 
-A callback that will be called with the parsed options when the command is used.
+A callback that will be called with the parsed options when the command is used. The arguments passed to the callback are a filled `options` object and the command name. 
+
+When the `.command()` section of the setup code does *not* specify a callback, then the "fallback callback" will be invoked instead. This callback is the one defined in the `.nocommand()` a.k.a. empty `.command()` (without any `name` argument). Then the `command` name parameter passed to the provided callback will be `null`.
+
 
 
 #### help
