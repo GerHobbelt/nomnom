@@ -909,7 +909,7 @@ var Arg = function (str) {
 };
 
 /* an opt is what's specified by the user in opts hash */
-var Opt = function (opt, name) {
+var Opt = function Opt(opt, name) {
   var strings = (opt.string || "").split(",");
   var abbr,
       full,
